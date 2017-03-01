@@ -58,7 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand(commands.startSession, () => {
         _channel.show(true);
 
-        var a = fileChangeProvider(new CollaborationServer(Uri.parse("http://uri.com")), _channel);
+        var a = fileChangeProvider(new CollaborationServer(Uri.parse("http://uri.com"),_channel), _channel);
 
         context.subscriptions.push(a);
 
