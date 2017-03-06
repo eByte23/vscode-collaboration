@@ -32,13 +32,17 @@ export class CollaborationServer {
 
         this._connection.onmessage = (evt) => {
             var $ievent = JSON.parse(evt.data);
+            var data = JSON.parse(evt.data) as IEvent[];
 
-            if ($ievent.type == "ChangeEvent") {
-                let $event = JSON.parse(evt.data) as Events.ChangeEvent;
-                this.onChange($event);
-            }
+            data.forEach(x => {
+                if (x.type == "ChangeEvent") {
+                    let $event = x as Events.ChangeEvent;
+                    this.onChange($event);
+                }
 
-            this._channel.appendLine(`socket message<${$ievent.type}>:  ${evt.data}`);
+                //this._channel.appendLine(`socket message<${$ievent.type}>:  ${evt.data}`);
+            })
+
         };
         this._connection.onerror = (evt) => {
             this._channel.appendLine(`socket error: ${evt.message}`);
@@ -49,19 +53,17 @@ export class CollaborationServer {
     }
 
     public sendEvent($event: IEvent): void {
-        this.send(JSON.stringify($event));
+        this.sendEvents([$event]);
     }
 
-    public onChange(event: Events.ChangeEvent) :void {
-        this._channel.appendLine(`Recieved chanages from:${event.by} ${JSON.stringify(event)}`);
-        fP.applyChanges(event.relativeFileName, event.data);
+    public sendEvents($events: IEvent[]): void {
+        this.send(JSON.stringify($events));
     }
 
-    // public setOn(a: (event: Events.ChangeEvent) => void): void {
-    //     this._onChange = a;
-    // }
-
-    //public on: () => void;
+    public onChange(event: Events.ChangeEvent): void {
+        this._channel.appendLine(`Recieved chanages (${event.by}), delta: ${event.data.delta}, lastVersion: ${event.data.lastRecievedVersion}, version: ${event.data.version}`);
+        fP.applyChanges(event);
+    }
 
     public send(data: string): void {
 
@@ -91,22 +93,23 @@ export interface IEvent {
 export module Events {
     export class ChangeEvent implements IEvent {
 
-        constructor(relativeFilePath: string, diff: Diff, by: string) {
-            this.relativeFileName = relativeFilePath;
-            this.data = diff as any;
+        constructor(diff: Diff, by: string) {
+            this.data = diff;
             this.by = by;
         }
 
-        by: string;
-        data: any;
-        relativeFileName: string;
+        by: string; // TODO: This could change to an ID given when connecting to session
+        data: Diff;
         type: string = "ChangeEvent";
     }
 
 
     export interface Diff {
+        relativeFileName: string;
         delta: string;
         checksum: string;
+        version: number;
+        lastRecievedVersion: number;
     }
 }
 
