@@ -6,8 +6,10 @@ import * as patch from 'component-patch';
 import setText from '../utils/setText';
 import * as crypto from 'crypto';
 import * as path from 'path';
+import constants from '../utils/constants';
+import * as uuid from 'uuid/v4';
 
-let username = 'thomas'
+let username = vscode.workspace.getConfiguration(`${constants.ExtensionName}`).get('userId', uuid());
 let updateTime = 500;
 let documents: { [id: string]: DocumentCache } = {};
 let changeCache: Events.ChangeEvent[] = [];

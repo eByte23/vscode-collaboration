@@ -3,16 +3,21 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { Uri } from 'vscode';
-import CollaborationServer from './collaborationServer';
+import CollaborationServer, { Events } from './collaborationServer';
 import fileChangeProvider from './features/fileChangeProviders';
+import * as request from 'request';
+import constants from './utils/constants';
+var concat = require('concat-stream');
+import * as uuid from 'uuid/v4';
+
 
 const commands = {
-    startSession: "collaboration.start",
-    saveSession: "collaboration.save",
-    endSession: "collaboration.end",
-    connectToSession: "collaboration.connect"
+    startSession: `${constants.ExtensionName}.start`,
+    saveSession: `${constants.ExtensionName}.save`,
+    endSession: `${constants.ExtensionName}.end`,
+    connectToSession: `${constants.ExtensionName}.connect`,
+    createUser: `${constants.ExtensionName}.createUser`
 };
-
 
 interface settings {
     syncActiveDocument: boolean,
@@ -30,7 +35,8 @@ export interface Status {
 export { commands };
 
 export function activate(context: vscode.ExtensionContext) {
-
+    let _username = null;
+    let _server: CollaborationServer = null;
     let _channel = vscode.window.createOutputChannel("collaboration");
     let statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
     let status: Status = {
@@ -55,42 +61,90 @@ export function activate(context: vscode.ExtensionContext) {
         .setCommand(commands.startSession)
         .show();
 
-    let disposable = vscode.commands.registerCommand(commands.startSession, () => {
+    context.subscriptions.push(vscode.commands.registerCommand(commands.startSession, () => {
         _channel.show(true);
+        var config = vscode.workspace.getConfiguration(constants.ExtensionName);
+        var url = config.get<string>("endpoint", "ws://127.0.0.1:3000");
+        var userId = config.get<string>("userId", _username);
 
-        var a = fileChangeProvider(new CollaborationServer(Uri.parse("http://uri.com"),_channel), _channel);
+        if (userId == null) {
+            vscode.window.showErrorMessage("You must first create an account before collaborating");
+            return;
+        }
 
-        context.subscriptions.push(a);
+        _server = new CollaborationServer(url, _channel);
+        _server._connection.on('connect', () => {
+            context.subscriptions.push(fileChangeProvider(_server, _channel));
+            var sessionId = uuid();
+            _server.sendEvent(new Events.StartSession(sessionId, userId));
+            vscode.window.showInformationMessage(`To let your friends connect to your ssession share this id: ${sessionId}`);
+        });
+    }));
 
-        //vscode.window.showInformationMessage('Hello World!');
+    context.subscriptions.push(vscode.commands.registerCommand(commands.connectToSession, () => {
+        var config = vscode.workspace.getConfiguration(constants.ExtensionName);
+        var url = config.get<string>("endpoint", "ws://127.0.0.1:3000");
+        var userId = config.get<string>("userId", _username);
 
-    });
+        vscode.window.showInputBox({
+            placeHolder: "123456vbhhb",
+            prompt: "Enter the session id you wish to connect to",
+        })
+            .then((e) => {
+                if (_server == null) {
+                    _server = new CollaborationServer(url, _channel);
+                }
 
-    context.subscriptions.push(disposable);
+                _server._connection.on('connect', () => {
+                    _server.sendEvent(new Events.JoinSession(e, userId));
+                });
+            });
+
+    }));
+
+
+    context.subscriptions.push(vscode.commands.registerCommand(commands.createUser, () => {
+        let username: string;
+        //let password: string = null;
+        //let userId: string = null;
+
+        vscode.window.showInputBox({
+            placeHolder: "exampleuser@domain.com",
+            prompt: "Enter a user or email",
+        })
+            .then((e) => {
+                username = e;
+                var config = vscode.workspace.getConfiguration(constants.ExtensionName);
+                var userId = config.get<string>("userId", null);
+            });
+        //         vscode.window.showInputBox({ placeHolder: "password", prompt: "Enter a password", password: true })
+        //             .then((e) => {
+        //                 password = e;
+        //                 request.post("http://127.0.0.1:3000/user/create",
+        //                     {
+        //                         body: JSON.stringify({ username: username, password: password }),
+        //                         port:3000,
+        //                     }, (err, res: request.RequestResponse, body) => {
+        //                             if (res.statusCode == 200) {
+        //                             var parsed = JSON.parse(body);
+
+        //                                 userId = parsed.userId;
+        //                             }
+
+        //                     }).on('error', (err) => {
+        //                         console.log(err);
+        //                     });
+        //             });
+        //     });
+
+
+
+
+
+        // _channel.appendLine(userId);
+    }));
 }
 
 // this method is called when your extension is deactivated
 export function deactivate() {
 }
-
-// export class CollaborationStatusBarItem implements vscode.StatusBarItem
-// {
-//     alignment: vscode.StatusBarAlignment = vscode.StatusBarAlignment.Right
-//     priority: number;
-//     text: string = "(organization) Collaborate"
-//     tooltip: string = "Click to start a session"
-//     color: string = "#fff"
-//     command: string = commands.startSession
-//     show(): void {
-
-//         //throw new Error('Method not implemented.');
-//     }
-//     hide(): void {
-//         throw new Error('Method not implemented.');
-//     }
-//     dispose(): void {
-//         throw new Error('Method not implemented.');
-//     }
-
-
-// }

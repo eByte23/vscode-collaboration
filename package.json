@@ -17,10 +17,22 @@
   "contributes": {
     "commands": [
       {
-        "command": "collaboration.start",
+        "command": "vscode-collaboration.start",
         "title": "Start Collaborating!"
+      },
+      {
+          "command": "vscode-collaboration.connect",
+          "title": "Connect to a vscode collaboration session!"
+      },
+      {
+        "command": "vscode-collaboration.createUser",
+        "title": "Create Collaboration user"
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "vscode-collaboration.userId": null,
+      "vscode-collaboration.endpoint": null
+    }
   },
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
@@ -29,16 +41,23 @@
     "test": "node ./node_modules/vscode/bin/test"
   },
   "devDependencies": {
-    "typescript": "^2.0.3",
-    "vscode": "^1.0.0",
-    "mocha": "^2.3.3",
-    "@types/node": "^6.0.64",
     "@types/mocha": "^2.2.32",
-    "@types/ws": "0.0.38"
+    "@types/node": "^6.0.64",
+    "@types/request": "0.0.40",
+    "@types/socket.io-client": "^1.4.29",
+    "@types/ws": "0.0.38",
+    "@types/uuid":"2.0.29",
+    "mocha": "^2.3.3",
+    "typescript": "^2.0.3",
+    "vscode": "^1.0.0"
   },
   "dependencies": {
     "component-diff": "*",
     "component-patch": "*",
+    "concat-stream": "^1.6.0",
+    "request": "^2.80.0",
+    "socket.io-client": "^1.7.3",
+    "uuid": "^3.0.1",
     "ws": "^2.2.0"
   }
 }
