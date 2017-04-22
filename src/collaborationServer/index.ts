@@ -1,6 +1,6 @@
 import { Uri, OutputChannel } from 'vscode';
 import * as vscode from 'vscode';
-import * as socket from 'socket.io-client';
+import * as io from 'socket.io-client';
 import * as fP from '../features/fileChangeProviders';
 
 
@@ -15,8 +15,9 @@ export class CollaborationServer {
      */
     constructor(serverEndpoint: string, channel: OutputChannel) {
         this._channel = channel;
-        this._serverEndpoint = serverEndpoint || "ws://127.0.0.1:3000";
-        this._connection = socket(this._serverEndpoint, { autoConnect: true});
+        this._serverEndpoint = serverEndpoint || "http://127.0.0.1:3000";
+        this._channel.appendLine(`Attempting to connect to: ${this._serverEndpoint}`);
+        this._connection = io.connect(this._serverEndpoint, {timeout : 1000});
         //this.setupLogging();
         this.setupConnection();
     }

@@ -64,7 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand(commands.startSession, () => {
         _channel.show(true);
         var config = vscode.workspace.getConfiguration(constants.ExtensionName);
-        var url = config.get<string>("endpoint", "ws://127.0.0.1:3000");
+        var url = config.get<string>("endpoint", "http://127.0.0.1:3000");
         var userId = config.get<string>("userId", _username);
 
         if (userId == null) {

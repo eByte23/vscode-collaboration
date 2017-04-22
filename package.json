@@ -2,6 +2,10 @@
   "name": "vscode-collaboration",
   "displayName": "vscode-collaboration",
   "description": "Real time team collaboration",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eByte23/vscode-collaboration.git"
+  },
   "version": "0.0.1",
   "publisher": "ebyte23",
   "engines": {
@@ -21,8 +25,8 @@
         "title": "Start Collaborating!"
       },
       {
-          "command": "vscode-collaboration.connect",
-          "title": "Connect to a vscode collaboration session!"
+        "command": "vscode-collaboration.connect",
+        "title": "Connect to a vscode collaboration session!"
       },
       {
         "command": "vscode-collaboration.createUser",
@@ -41,20 +45,20 @@
     "test": "node ./node_modules/vscode/bin/test"
   },
   "devDependencies": {
+    "@types/diff-match-patch": "^1.0.31",
     "@types/mocha": "^2.2.32",
     "@types/node": "^6.0.64",
     "@types/request": "0.0.40",
     "@types/socket.io-client": "^1.4.29",
+    "@types/uuid": "2.0.29",
     "@types/ws": "0.0.38",
-    "@types/uuid":"2.0.29",
     "mocha": "^2.3.3",
     "typescript": "^2.0.3",
     "vscode": "^1.0.0"
   },
   "dependencies": {
-    "component-diff": "*",
-    "component-patch": "*",
     "concat-stream": "^1.6.0",
+    "diff-match-patch": "^1.0.0",
     "request": "^2.80.0",
     "socket.io-client": "^1.7.3",
     "uuid": "^3.0.1",

@@ -1,8 +1,7 @@
 import { Disposable, workspace, TextDocument, TextDocumentChangeEvent, Uri, OutputChannel } from 'vscode';
 import * as vscode from 'vscode';
 import { CollaborationServer, Events } from '../collaborationServer';
-import * as diff from 'component-diff';
-import * as patch from 'component-patch';
+import { diff_match_patch } from 'diff-match-patch';
 import setText from '../utils/setText';
 import * as crypto from 'crypto';
 import * as path from 'path';
@@ -59,9 +58,11 @@ function runUpdate() {
             if (doc == null) continue;
             let isSimpleMatch = documents[file].shadow.text == text;
             if (isSimpleMatch) continue;
-            var out = diff(documents[file].shadow.text, text);
-            var delta = diff.toDelta(out);
-            var checksum = getChecksum(text);
+
+            const dmp = new diff_match_patch();
+            const diffs = dmp.diff_main(documents[file].shadow.text, text);
+            const delta = dmp.diff_toDelta(diffs);
+            const checksum = getChecksum(text);
 
             // Create change event and cache
             var event = new Events.ChangeEvent(
@@ -121,9 +122,10 @@ export function applyChanges(event: Events.ChangeEvent) {
         return;
     }
 
-    var docPatch = patch(doc.shadow.text, diffData.delta);
-    var patchedDoc = patch.apply(docPatch, doc.shadow.text)
-    var patchedChecksum = getChecksum(patchedDoc);
+    const dmp = new diff_match_patch()
+    const docPatch = dmp.patch_make(doc.shadow.text, diffData.delta);
+    const patchedDoc = dmp.patch_apply(docPatch, doc.shadow.text)[0]
+    const patchedChecksum = getChecksum(patchedDoc);
 
     if (patchedChecksum != diffData.checksum) {
         // failed to update properly
@@ -169,8 +171,9 @@ function cacheFile(file: TextDocument) {
 
 function setDocumentChanges(text: string, delta: string, editor?: any) {
     try {
-        var docPatch = patch(text, delta);
-        var patchedText = patch.apply(docPatch, text);
+        const dmp = new diff_match_patch();
+        const docPatch = dmp.patch_make(text, delta);
+        const patchedText = dmp.patch_apply(docPatch, text)[0];
         setText(patchedText, editor);
     } catch (ex) {
         console.log(ex);
